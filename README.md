@@ -29,7 +29,7 @@ Copy `.env.example` to `.env` and configure your database credentials:
 The Vercel configuration builds the Vite frontend and serves the Express API as a serverless function. Configure a hosted MySQL database before deploying; Vercel's serverless filesystem is not suitable for persistent SQLite data.
 
 1. Create the MySQL database and import `server/database/schema.sql`.
-2. Add these environment variables to the Vercel project for Production (and Preview if needed): `DB_ENGINE=mysql`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`.
+2. Add these environment variables to the Vercel project for Production (and Preview if needed): `DB_ENGINE=mysql`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`. Set `DB_SSL=true` when the provider requires TLS (including TiDB Cloud Starter).
 3. Deploy the project from its root with the Vercel CLI or connect its Git repository in the Vercel dashboard.
 4. Verify the deployment at `/api/health`.
 

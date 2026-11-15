@@ -17,6 +17,7 @@ export interface DbExecutor {
 }
 
 const DB_ENGINE = (process.env.DB_ENGINE || 'sqlite').toLowerCase();
+const DB_SSL = process.env.DB_SSL?.toLowerCase() === 'true';
 
 let mysqlPool: mysql.Pool | null = null;
 let sqliteDb: Database.Database | null = null;
@@ -51,6 +52,7 @@ export async function initializeConnection(): Promise<void> {
         connectionLimit: 10,
         queueLimit: 0,
         decimalNumbers: true,
+        ...(DB_SSL ? { ssl: { rejectUnauthorized: true } } : {}),
       });
 
       const conn = await mysqlPool.getConnection();
