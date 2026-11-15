@@ -1,0 +1,6 @@
+{
+  "name": "Batloung Farm Distribution System",
+  "description": "Fresh produce wholesale and distribution management system for Batloung Farm in Maseru, Lesotho, tracking South African suppliers, packaging-specific stock, vendor sales, payments, and SQL analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
