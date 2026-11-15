@@ -24,6 +24,15 @@ Copy `.env.example` to `.env` and configure your database credentials:
 - For **MySQL**: set `DB_ENGINE=mysql` along with `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME=batloung_farm_db`, then import `server/database/schema.sql`.
 - For **standalone preview**: leave `DB_ENGINE=sqlite` to run automatically with the same 8-table relational schema and sample data.
 
+## Deploying to Vercel
+
+The Vercel configuration builds the Vite frontend and serves the Express API as a serverless function. Configure a hosted MySQL database before deploying; Vercel's serverless filesystem is not suitable for persistent SQLite data.
+
+1. Create the MySQL database and import `server/database/schema.sql`.
+2. Add these environment variables to the Vercel project for Production (and Preview if needed): `DB_ENGINE=mysql`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`.
+3. Deploy the project from its root with the Vercel CLI or connect its Git repository in the Vercel dashboard.
+4. Verify the deployment at `/api/health`.
+
 ## REST API Endpoints
 
 - `GET /api/health` — Database & server health check
