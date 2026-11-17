@@ -20,6 +20,10 @@ const EMPTY_VENDOR = {
 export function VendorsPage({ vendors, onRefresh }: VendorsPageProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Vendor[]>(vendors);
+  const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
   const [editing, setEditing] = useState<Vendor | null>(null);
@@ -102,6 +106,39 @@ export function VendorsPage({ vendors, onRefresh }: VendorsPageProps) {
   }
 
   const totalOutstanding = results.reduce((sum, v) => sum + v.outstanding_balance, 0);
+  const selectedVendor = results.find((vendor) => vendor.vendor_id === selectedVendorId) ?? results[0];
+  const mapQuery = currentLocation
+    ? `${currentLocation.latitude},${currentLocation.longitude}`
+    : selectedVendor
+      ? `${selectedVendor.location}, Lesotho`
+      : '';
+
+  function showCurrentLocation() {
+    if (!navigator.geolocation) {
+      setLocationError('Location access is not available in this browser.');
+      return;
+    }
+
+    setLocating(true);
+    setLocationError(null);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setCurrentLocation({ latitude: coords.latitude, longitude: coords.longitude });
+        setLocating(false);
+      },
+      (geoError) => {
+        setLocationError(
+          geoError.code === geoError.PERMISSION_DENIED
+            ? 'Location permission was denied. Allow location access in your browser and try again.'
+            : geoError.code === geoError.POSITION_UNAVAILABLE
+              ? 'Your current location could not be determined.'
+              : 'Location request timed out. Please try again.'
+        );
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -150,6 +187,79 @@ export function VendorsPage({ vendors, onRefresh }: VendorsPageProps) {
           <span className="font-semibold text-slate-900">{formatCurrency(totalOutstanding)}</span>
         </div>
       </div>
+
+      {selectedVendor && (
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Vendor Location Map</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                {currentLocation
+                  ? `Showing your current location (${currentLocation.latitude.toFixed(5)}, ${currentLocation.longitude.toFixed(5)})`
+                  : `Showing ${selectedVendor.vendor_name} · ${selectedVendor.location}`}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <label className="sr-only" htmlFor="vendor-map-select">
+                Choose a vendor to show on the map
+              </label>
+              <select
+                id="vendor-map-select"
+                value={selectedVendor.vendor_id}
+                onChange={(event) => {
+                  setSelectedVendorId(Number(event.target.value));
+                  setCurrentLocation(null);
+                  setLocationError(null);
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-emerald-700 focus:outline-none"
+              >
+                {results.map((vendor) => (
+                  <option key={vendor.vendor_id} value={vendor.vendor_id}>
+                    {vendor.vendor_name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={showCurrentLocation}
+                disabled={locating}
+                className="rounded-lg border border-emerald-700 px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-50 disabled:opacity-50"
+              >
+                {locating ? 'Finding location...' : currentLocation ? 'Refresh my location' : 'Use my current location'}
+              </button>
+              {currentLocation && (
+                <button
+                  type="button"
+                  onClick={() => setCurrentLocation(null)}
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Show vendor
+                </button>
+              )}
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg border border-slate-300 px-3 py-2 text-center text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Open in Google Maps
+              </a>
+            </div>
+          </div>
+          {locationError && (
+            <p role="alert" className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-900">
+              {locationError}
+            </p>
+          )}
+          <iframe
+            title={currentLocation ? 'Google Map showing your current location' : `Google Map showing ${selectedVendor.location}`}
+            src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
+            className="h-72 w-full border-0 sm:h-96"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </section>
+      )}
 
       {/* Vendors Table */}
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
